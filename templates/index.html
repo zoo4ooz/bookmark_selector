@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Safariブックマーク選択</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>📚 Safariブックマークをアップロードして選択</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".html" required>
+    <button type="submit">📤 アップロード</button>
+  </form>
+
+  {% if bookmarks %}
+    <hr>
+    <form method="POST" enctype="multipart/form-data" id="bookmarkForm">
+      <input type="hidden" name="file" value="{{ request.form.file }}">
+
+      <div style="margin-bottom: 10px;">
+        <button type="button" onclick="selectAll(true)">✅ 全選択</button>
+        <button type="button" onclick="selectAll(false)">🚫 全解除</button>
+      </div>
+
+      <div class="card-list">
+        {% for bm in bookmarks %}
+          <label class="card {% if bm.url in selected_urls %}selected{% endif %}" onclick="toggleCheck(this)">
+            <input type="checkbox" name="selected" value="{{ bm.url }}" hidden {% if bm.url in selected_urls %}checked{% endif %}>
+            <div class="card-content">
+              <strong>{{ bm.title }}</strong><br>
+              <small>{{ bm.url }}</small>
+            </div>
+          </label>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="submit-btn">✅ 選んだリンクを表示</button>
+    </form>
+  {% endif %}
+
+  {% if selected_links %}
+    <h2>✅ 選ばれたリンク</h2>
+    <ul>
+      {% for link in selected_links %}
+        <li><a href="{{ link.url }}" target="_blank">{{ link.title }}</a></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <script>
+    function toggleCheck(label) {
+      const input = label.querySelector("input[type='checkbox']");
+      input.checked = !input.checked;
+      label.classList.toggle("selected", input.checked);
+    }
+
+    function selectAll(state) {
+      const checkboxes = document.querySelectorAll("input[type='checkbox']");
+      checkboxes.forEach(cb => {
+        cb.checked = state;
+        cb.closest("label").classList.toggle("selected", state);
+      });
+    }
+  </script>
+</body>
+</html>
