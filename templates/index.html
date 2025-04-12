@@ -7,16 +7,17 @@
 </head>
 <body>
   <h1>📚 Safariブックマークをアップロードして選択</h1>
-  <form method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".html" required>
-    <button type="submit">📤 アップロード</button>
-  </form>
 
-  {% if bookmarks %}
+  {% if not selected_links %}
+    <form method="POST" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".html" required>
+      <button type="submit">📤 アップロード</button>
+    </form>
+  {% endif %}
+
+  {% if bookmarks and not selected_links %}
     <hr>
     <form method="POST" enctype="multipart/form-data" id="bookmarkForm">
-      <input type="hidden" name="file" value="{{ request.form.file }}">
-
       <div style="margin-bottom: 10px;">
         <button type="button" onclick="selectAll(true)">✅ 全選択</button>
         <button type="button" onclick="selectAll(false)">🚫 全解除</button>
@@ -24,8 +25,8 @@
 
       <div class="card-list">
         {% for bm in bookmarks %}
-          <label class="card {% if bm.url in selected_urls %}selected{% endif %}" onclick="toggleCheck(this)">
-            <input type="checkbox" name="selected" value="{{ bm.url }}" hidden {% if bm.url in selected_urls %}checked{% endif %}>
+          <label class="card" onclick="toggleCheck(this)">
+            <input type="checkbox" name="selected" value="{{ bm.url }}" hidden>
             <div class="card-content">
               <strong>{{ bm.title }}</strong><br>
               <small>{{ bm.url }}</small>
@@ -34,7 +35,11 @@
         {% endfor %}
       </div>
 
+      <!-- アップロードファイルは一度しか扱えないため再送しない -->
+      <input type="hidden" name="hidden_bookmarks" id="hiddenBookmarks">
+
       <button type="submit" class="submit-btn">✅ 選んだリンクを表示</button>
+      <button type="submit" name="send_to_notion" value="1">📥 Notionに送信</button>
     </form>
   {% endif %}
 
@@ -46,6 +51,10 @@
       {% endfor %}
     </ul>
   {% endif %}
+
+  <script id="bookmarkData" type="application/json">
+    {{ bookmarks | tojson | safe }}
+  </script>
 
   <script>
     function toggleCheck(label) {
@@ -60,6 +69,13 @@
         cb.checked = state;
         cb.closest("label").classList.toggle("selected", state);
       });
+    }
+
+      // 👇 hiddenBookmarks に JSON を埋め込む
+    const bookmarkScript = document.getElementById("bookmarkData");
+    if (bookmarkScript) {
+      const bookmarksData = JSON.parse(bookmarkScript.textContent);
+      document.getElementById("hiddenBookmarks").value = JSON.stringify(bookmarksData);
     }
   </script>
 </body>
