@@ -35,11 +35,9 @@
         {% endfor %}
       </div>
 
-      <!-- アップロードファイルは一度しか扱えないため再送しない -->
       <input type="hidden" name="hidden_bookmarks" id="hiddenBookmarks">
 
       <button type="submit" class="submit-btn">✅ 選んだリンクを表示</button>
-      <button type="submit" name="send_to_notion" value="1">📥 Notionに送信</button>
     </form>
   {% endif %}
 
@@ -50,11 +48,24 @@
         <li><a href="{{ link.url }}" target="_blank">{{ link.title }}</a></li>
       {% endfor %}
     </ul>
+
+    <!-- Notion送信フォーム -->
+    <form method="POST">
+      <!-- 選択済みリンクを再送 -->
+      {% for link in selected_links %}
+        <input type="hidden" name="selected" value="{{ link.url }}">
+      {% endfor %}
+      <input type="hidden" name="hidden_bookmarks" id="hiddenBookmarks">
+      <button type="submit" name="send_to_notion" value="1">📥 Notionに送信</button>
+    </form>
   {% endif %}
 
-  <script id="bookmarkData" type="application/json">
-    {{ bookmarks | tojson | safe }}
-  </script>
+  <!-- JSONデータ埋め込み用 -->
+  {% if bookmarks %}
+    <script id="bookmarkData" type="application/json">
+      {{ bookmarks | tojson | safe }}
+    </script>
+  {% endif %}
 
   <script>
     function toggleCheck(label) {
@@ -71,11 +82,16 @@
       });
     }
 
-      // 👇 hiddenBookmarks に JSON を埋め込む
+    // JSONを hiddenBookmarks に埋め込む
     const bookmarkScript = document.getElementById("bookmarkData");
-    if (bookmarkScript) {
-      const bookmarksData = JSON.parse(bookmarkScript.textContent);
-      document.getElementById("hiddenBookmarks").value = JSON.stringify(bookmarksData);
+    const hiddenInput = document.getElementById("hiddenBookmarks");
+    if (bookmarkScript && hiddenInput) {
+      try {
+        const bookmarksData = JSON.parse(bookmarkScript.textContent);
+        hiddenInput.value = JSON.stringify(bookmarksData);
+      } catch (e) {
+        console.error("📛 JSONパースに失敗しました", e);
+      }
     }
   </script>
 </body>
